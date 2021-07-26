@@ -15,7 +15,7 @@ class TokenType(Enum):
     LPAREN = auto()
     PLUS = auto()
     RBRACE = auto()
-    RPARENT = auto()
+    RPAREN = auto()
     SEMICOLON = auto()
 
 class Token(NamedTuple):
