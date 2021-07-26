@@ -1,23 +1,33 @@
 from lpp.token import Token, TokenType, lookup_token_type
-from re import compile
+from re import compile, Pattern
+from typing import NamedTuple
+
+class TokenRegex(NamedTuple):
+    n_characters: int
+    regex: Pattern[str]
+    token_type: TokenType
 
 TOKEN_REGEX = [
-    (compile(r'^=$'), TokenType.ASSIGN),
-    (compile(r'^\+$'), TokenType.PLUS),
-    (compile(r'^$'), TokenType.EOF),
-    (compile(r'^\($'), TokenType.LPAREN),
-    (compile(r'^\)$'), TokenType.RPAREN),
-    (compile(r'^{$'), TokenType.LBRACE),
-    (compile(r'^}$'), TokenType.RBRACE),
-    (compile(r'^,$'), TokenType.COMMA),
-    (compile(r'^;$'), TokenType.SEMICOLON),
-    (compile(r'^<$'), TokenType.LT),
-    (compile(r'^>$'), TokenType.GT),
-    (compile(r'^-$'), TokenType.MINUS),
-    (compile(r'^/$'), TokenType.DIVISION),
-    (compile(r'^\*$'), TokenType.MULTIPLICATION),
-    (compile(r'^!$'), TokenType.NEGATION),
+    TokenRegex(2, compile(r'^==$'), TokenType.EQ),
+    TokenRegex(2, compile(r'^!=$'), TokenType.NOT_EQ),
+
+    TokenRegex(1, compile(r'^=$'), TokenType.ASSIGN),
+    TokenRegex(1, compile(r'^\+$'), TokenType.PLUS),
+    TokenRegex(1, compile(r'^$'), TokenType.EOF),
+    TokenRegex(1, compile(r'^\($'), TokenType.LPAREN),
+    TokenRegex(1, compile(r'^\)$'), TokenType.RPAREN),
+    TokenRegex(1, compile(r'^{$'), TokenType.LBRACE),
+    TokenRegex(1, compile(r'^}$'), TokenType.RBRACE),
+    TokenRegex(1, compile(r'^,$'), TokenType.COMMA),
+    TokenRegex(1, compile(r'^;$'), TokenType.SEMICOLON),
+    TokenRegex(1, compile(r'^<$'), TokenType.LT),
+    TokenRegex(1, compile(r'^>$'), TokenType.GT),
+    TokenRegex(1, compile(r'^-$'), TokenType.MINUS),
+    TokenRegex(1, compile(r'^/$'), TokenType.DIVISION),
+    TokenRegex(1, compile(r'^\*$'), TokenType.MULTIPLICATION),
+    TokenRegex(1, compile(r'^!$'), TokenType.NEGATION),
 ]
+TOKEN_REGEX.sort(key=lambda x: x.n_characters, reverse=True)
 
 LETTER_REGEX = compile(r'^[a-záéíóúA-ZÁÉÍÓÚñÑ_]$')
 NUMBER_REGEX = compile(r'^[0-9]$')
@@ -34,10 +44,11 @@ class Lexer:
 
     def next_token(self) -> Token:
         self._skip_whitespace()
-        for (regex, token_type) in TOKEN_REGEX:
-            if regex.match(self._character):
-                token = Token(token_type, self._character)
-                self._read_character()
+        for (n_characters, regex, token_type) in TOKEN_REGEX:
+            literal = self._character + self._peek_character(n_characters - 1)
+            if regex.match(literal):
+                token = Token(token_type, literal)
+                self._read_character(n_characters=n_characters)
                 return token
 
         if self._is_letter(self._character):
@@ -60,18 +71,26 @@ class Lexer:
     def _is_number(self, character: str) -> bool:
         return bool(NUMBER_REGEX.match(character))
 
-    def _read_character(self) -> None:
-        if self._read_position >= len(self._source):
+    def _read_character(self, n_characters: int = 1) -> None:
+        new_position = self._position + n_characters
+
+        if new_position >= len(self._source):
             self._character = ''
+            self._read_position = len(self._source) + 1
+            self._position = len(self._source)
         else:
-            self._character = self._source[self._read_position]
-            self._position = self._read_position
-            self._read_position += 1
+            self._character = self._source[new_position]
+            self._read_position += n_characters
+            self._position = self._read_position - 1
 
     def _read_identifier(self) -> str:
         initial_position = self._position
 
-        while self._is_letter(self._character):
+        if not self._is_letter(self._character):
+            return ''
+        
+        self._read_character()
+        while self._is_letter(self._character) or self._is_number(self._character):
             self._read_character()
 
         return self._source[initial_position:self._position]
@@ -87,3 +106,9 @@ class Lexer:
     def _skip_whitespace(self) -> None:
         while WHITESPACE_REGEX.match(self._character):
             self._read_character()
+
+    def _peek_character(self, n_characters: int) -> str:
+        if self._read_position + n_characters >= len(self._source):
+            return self._source[self._read_position:]
+        else:
+            return self._source[self._read_position:self._read_position + n_characters]
