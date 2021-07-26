@@ -11,7 +11,14 @@ TOKEN_REGEX = [
     (compile(r'^}$'), TokenType.RBRACE),
     (compile(r'^,$'), TokenType.COMMA),
     (compile(r'^;$'), TokenType.SEMICOLON),
+    (compile(r'^<$'), TokenType.LT),
+    (compile(r'^>$'), TokenType.GT),
+    (compile(r'^-$'), TokenType.MINUS),
+    (compile(r'^/$'), TokenType.DIVISION),
+    (compile(r'^\*$'), TokenType.MULTIPLICATION),
+    (compile(r'^!$'), TokenType.NEGATION),
 ]
+
 LETTER_REGEX = compile(r'^[a-záéíóúA-ZÁÉÍÓÚñÑ_]$')
 NUMBER_REGEX = compile(r'^[0-9]$')
 WHITESPACE_REGEX = compile(r'^\s+$')
