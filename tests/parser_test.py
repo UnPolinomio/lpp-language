@@ -1,7 +1,7 @@
 from unittest import TestCase
 from lpp.lexer import Lexer
 from lpp.parser import Parser
-from lpp.ast import Program, LetStatement
+from lpp.ast import Program, LetStatement, ReturnStatement
 
 from typing import cast
 
@@ -63,3 +63,18 @@ class ParserTest(TestCase):
         parser.parse_program()
 
         self.assertEqual(len(parser.errors), 1)
+
+    def test_return_statement(self) -> None:
+        source = '''
+            regresa 5;
+            regresa foo;
+        '''
+
+        lexer = Lexer(source)
+        parser = Parser(lexer)
+        program = parser.parse_program()
+
+        self.assertEqual(len(program.statements), 2)
+        for statement in program.statements:
+            self.assertEqual(statement.token_literal(), 'regresa')
+            self.assertIsInstance(statement, ReturnStatement)

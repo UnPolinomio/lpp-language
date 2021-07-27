@@ -1,7 +1,13 @@
 from typing import Optional
 from typing import Optional
 
-from lpp.ast import Identifier, Program, Statement, LetStatement
+from lpp.ast import (
+    Identifier,
+    Program,
+    Statement,
+    LetStatement,
+    ReturnStatement,
+)
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
 
@@ -51,6 +57,8 @@ class Parser:
     def _parse_statement(self) -> Optional[Statement]:
         if self._current_token.token_type == TokenType.LET:
             return self._parse_let_statement()
+        if self._current_token.token_type == TokenType.RETURN:
+            return self._parse_return_statement()
 
         return None
 
@@ -78,3 +86,14 @@ class Parser:
             name=let_name,
             value=let_value
         )
+
+    def _parse_return_statement(self) -> Optional[ReturnStatement]:
+        return_token = self._current_token
+
+        self._advance_token()
+
+        # TODO: Parse expression
+        while self._current_token.token_type != TokenType.SEMICOLON:
+            self._advance_token()
+
+        return ReturnStatement(token=return_token)
