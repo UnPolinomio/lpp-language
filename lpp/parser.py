@@ -12,6 +12,12 @@ class Parser:
         self._current_token: Token = lexer.next_token()
         self._peek_token: Token = lexer.next_token()
 
+        self._errors: list[str] = []
+
+    @property
+    def errors(self) -> list[str]:
+        return self._errors
+
     def parse_program(self):
         statements=[]
 
@@ -33,7 +39,14 @@ class Parser:
             self._advance_token()
             return True
 
+        self._expected_token_error(token_type)
         return False
+
+    def _expected_token_error(self, token_type: TokenType) -> None:
+        error = \
+            f'Se esperaba que el siguiente token fuera {token_type} ' \
+            f'pero se obtuvo {self._peek_token.token_type}'
+        self._errors.append(error)
 
     def _parse_statement(self) -> Optional[Statement]:
         if self._current_token.token_type == TokenType.LET:

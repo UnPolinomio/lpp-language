@@ -54,3 +54,12 @@ class ParserTest(TestCase):
             names.append(identifier.value)
 
         self.assertEqual(names, ['x', 'y', 'foo'])
+
+    def test_parse_errors(self) -> None:
+        source = 'variable x 5;'
+        lexer = Lexer(source)
+        parser = Parser(lexer)
+
+        parser.parse_program()
+
+        self.assertEqual(len(parser.errors), 1)
