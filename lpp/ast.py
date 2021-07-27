@@ -60,7 +60,7 @@ class LetStatement(Statement):
         self.value = value
 
     def __str__(self) -> str:
-        return f'{self.token_literal()} {str(self.name)} = {str(self.value)}'
+        return f'{self.token_literal()} {str(self.name)} = {str(self.value)};'
 
 class ReturnStatement(Statement):
     def __init__(self, token: Token, return_value: Optional[Expression] = None) -> None:
@@ -68,4 +68,4 @@ class ReturnStatement(Statement):
         self.return_value = return_value
 
     def __str__(self) -> str:
-        return f'{self.token_literal()} {str(self.return_value)}'
+        return f'{self.token_literal()} {str(self.return_value)};'
