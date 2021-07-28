@@ -14,7 +14,8 @@ from lpp.ast import (
     Statement,
     LetStatement,
     ReturnStatement,
-    ExpressionStatement
+    ExpressionStatement,
+    Integer
 )
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
@@ -135,12 +136,24 @@ class Parser:
             expression=expression_expression,
         )
 
+    def _parse_integer(self) -> Optional[Integer]:
+        try:
+            value = int(self._current_token.literal)
+        except ValueError:
+            self._errors.append(
+                'No se ha podido parsear el valor ' \
+                f'{self._current_token.literal} como entero'
+            )
+            return None
+        return Integer(token=self._current_token, value=value)
+
     def _register_infix_fns(self) -> InfixParseFns:
         return {}
 
     def _register_prefix_fns(self) -> PrefixParseFns:
         return {
             TokenType.IDENT: self._parse_identifier,
+            TokenType.INT: self._parse_integer,
         }
 
     def _parse_expression(self, precedence: Precedence) -> Optional[Expression]:

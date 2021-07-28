@@ -1,10 +1,12 @@
 from unittest import TestCase
 
 from lpp.ast import (
+    ExpressionStatement,
     Identifier,
     LetStatement,
     Program,
-    ReturnStatement
+    ReturnStatement,
+    Integer,
 )
 from lpp.token import (
     Token,
@@ -57,3 +59,23 @@ class ASTTest(TestCase):
             )
         ])
         self.assertEqual(str(proqram), 'regresa mi_var;')
+
+    def test_integer_expressions(self) -> None:
+        program = Program(statements=[
+            ExpressionStatement(
+                token=Token(
+                    token_type=TokenType.INT,
+                    literal='10'
+                ),
+                expression=Integer(
+                    token=Token(
+                        token_type=TokenType.INT,
+                        literal='10'
+                    ),
+                    value=10
+                )
+            )
+        ])
+
+
+        self.assertEqual(str(program), '10')
