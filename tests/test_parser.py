@@ -8,7 +8,8 @@ from lpp.ast import (
     LetStatement,
     ReturnStatement,
     ExpressionStatement,
-    Integer
+    Integer,
+    Prefix,
 )
 
 from typing import Any, cast, Type
@@ -115,12 +116,37 @@ class ParserTest(TestCase):
         self._test_literal_expression(expression_statement.expression, 5)
 
 
+    def test_prefix_expression(self) -> None:
+        source = '!5; -15;'
+        lexer = Lexer(source)
+        parser = Parser(lexer)
+
+        program = parser.parse_program()
+
+        self._test_program_statements(parser, program, 2)
+
+        for statemet, (exprected_operator, expected_value) in zip(
+            program.statements,
+            [('!', 5), ('-', 15)]
+        ):
+            statemet = cast(ExpressionStatement, statemet)
+            self.assertIsInstance(statemet.expression, Prefix)
+
+            prefix = cast(Prefix, statemet.expression)
+            self.assertEqual(prefix.operator, exprected_operator)
+            
+            assert prefix.right is not None
+            self._test_literal_expression(prefix.right, expected_value)
+
     def _test_program_statements(
         self,
         parser: Parser,
         program: Program,
         expected_statement_count: int = 1
     ) -> None:
+        if parser.errors:
+            print(parser.errors)
+
         self.assertEqual(len(parser.errors), 0)
         self.assertEqual(len(program.statements), expected_statement_count)
         self.assertIsInstance(program.statements[0], ExpressionStatement)

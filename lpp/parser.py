@@ -15,7 +15,8 @@ from lpp.ast import (
     LetStatement,
     ReturnStatement,
     ExpressionStatement,
-    Integer
+    Integer,
+    Prefix,
 )
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
@@ -147,6 +148,16 @@ class Parser:
             return None
         return Integer(token=self._current_token, value=value)
 
+    def _parse_prefix_expression(self) -> Prefix:
+        token = self._current_token
+        self._advance_token()
+        right=self._parse_expression(Precedence.PREFIX)
+        return Prefix(
+            token=token,
+            operator=token.literal,
+            right=right
+        )
+
     def _register_infix_fns(self) -> InfixParseFns:
         return {}
 
@@ -154,12 +165,18 @@ class Parser:
         return {
             TokenType.IDENT: self._parse_identifier,
             TokenType.INT: self._parse_integer,
+            TokenType.MINUS: self._parse_prefix_expression,
+            TokenType.NEGATION: self._parse_prefix_expression,
         }
 
     def _parse_expression(self, precedence: Precedence) -> Optional[Expression]:
         try:
             prefix_parse_fn = self._prefix_parse_fns[self._current_token.token_type]
         except KeyError:
+            self._errors.append(
+                f'No se ha encontrado una función para parsear ' \
+                f'{self._current_token.literal}'
+            )
             return None
 
         left_expression = prefix_parse_fn()
