@@ -17,6 +17,7 @@ from lpp.ast import (
     ExpressionStatement,
     Integer,
     Prefix,
+    Infix,
 )
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
@@ -31,6 +32,19 @@ class Precedence(IntEnum):
     PREFIX = 6
     CALL = 7
 
+PRECEDENCES: dict[TokenType, Precedence] = {
+    TokenType.EQ: Precedence.EQUALS,
+    TokenType.NOT_EQ: Precedence.EQUALS,
+
+    TokenType.LT: Precedence.LESSGREATER,
+    TokenType.GT: Precedence.LESSGREATER,
+
+    TokenType.PLUS: Precedence.SUM,
+    TokenType.MINUS: Precedence.SUM,
+
+    TokenType.MULTIPLICATION: Precedence.PRODUCT,
+    TokenType.DIVISION: Precedence.PRODUCT,
+}
 
 PrefixParseFn = Callable[[], Optional[Expression]]
 InfixParseFn = Callable[[Expression], Optional[Expression]]
@@ -158,8 +172,43 @@ class Parser:
             right=right
         )
 
+    def _parse_infix_expression(self, left: Expression) -> Infix:
+        token = self._current_token
+        self._advance_token()
+        precedence = self._current_precedence()
+        return Infix(
+            token=token,
+            operator=token.literal,
+            left=left,
+            right=self._parse_expression(precedence)
+        )
+    
+    def _current_precedence(self) -> Precedence:
+        try:
+            return PRECEDENCES[self._current_token.token_type]
+        except KeyError:
+            return Precedence.LOWEST
+
+    def _peek_precedence(self) -> Precedence:
+        try:
+            return PRECEDENCES[self._peek_token.token_type]
+        except KeyError:
+            return Precedence.LOWEST
+
     def _register_infix_fns(self) -> InfixParseFns:
-        return {}
+        return {
+            TokenType.EQ: self._parse_infix_expression,
+            TokenType.NOT_EQ: self._parse_infix_expression,
+
+            TokenType.LT: self._parse_infix_expression,
+            TokenType.GT: self._parse_infix_expression,
+
+            TokenType.PLUS: self._parse_infix_expression,
+            TokenType.MINUS: self._parse_infix_expression,
+
+            TokenType.MULTIPLICATION: self._parse_infix_expression,
+            TokenType.DIVISION: self._parse_infix_expression,
+        }
 
     def _register_prefix_fns(self) -> PrefixParseFns:
         return {
@@ -180,6 +229,20 @@ class Parser:
             return None
 
         left_expression = prefix_parse_fn()
+
+        while (
+            not self._peek_token.token_type == TokenType.SEMICOLON and \
+            self._peek_precedence() > precedence
+        ):
+            try:
+                infix_parse_fn = self._infix_parse_fns[self._peek_token.token_type]  
+            except KeyError:
+                return left_expression
+
+            self._advance_token()
+            assert left_expression is not None
+            left_expression = infix_parse_fn(left_expression)
+
         return left_expression
         
     def _parse_identifier(self) -> Identifier:
