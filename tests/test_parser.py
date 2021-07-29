@@ -119,17 +119,17 @@ class ParserTest(TestCase):
 
 
     def test_prefix_expression(self) -> None:
-        source = '!5; -15;'
+        source = '!5; -15; !verdadero; !falso'
         lexer = Lexer(source)
         parser = Parser(lexer)
 
         program = parser.parse_program()
 
-        self._test_program_statements(parser, program, 2)
+        self._test_program_statements(parser, program, 4)
 
         for statemet, (exprected_operator, expected_value) in zip(
             program.statements,
-            [('!', 5), ('-', 15)]
+            [('!', 5), ('-', 15), ('!', True), ('!', False)]
         ):
             statemet = cast(ExpressionStatement, statemet)
             self.assertIsInstance(statemet.expression, Prefix)
@@ -150,12 +150,14 @@ class ParserTest(TestCase):
             5 < 5;
             5 == 5;
             5 != 5;
+            verdadero == falso;
+            falso != verdadero;
         '''
         lexer = Lexer(source)
         parser = Parser(lexer)
 
         program = parser.parse_program()
-        self._test_program_statements(parser, program, 8)
+        self._test_program_statements(parser, program, 10)
 
         expected_operators_and_values: list[tuple[int, str, int]] = [
             (5, '+', 5),
@@ -166,6 +168,8 @@ class ParserTest(TestCase):
             (5, '<', 5),
             (5, '==', 5),
             (5, '!=', 5),
+            (True, '==', False),
+            (False, '!=', True),
         ]
 
         for statemet, (expected_left, expected_operator, expected_right) in zip(
@@ -202,6 +206,28 @@ class ParserTest(TestCase):
                 expected_value,
             )
         
+    def test_operator_precedence(self) -> None:
+        test_sources: list[tuple[str, str, int]] = [
+            ('-a * b;', '((-a) * b)', 1),
+            ('!-a;', '(!(-a))', 1),
+            ('a + b / c;', '(a + (b / c))', 1),
+            (' 3 + 4; -5 * 5;', '(3 + 4)((-5) * 5)', 2),
+            ('a + b * c;', '(a + (b * c))', 1),
+            ('!a * b;', '((!a) * b)', 1),
+            ('verdadero;', 'verdadero', 1),
+            ('falso;', 'falso', 1),
+            ('a + b * c + d / e - f;', '(((a + (b * c)) + (d / e)) - f)', 1),
+            ('5 > 4 == 3 < 4;', '((5 > 4) == (3 < 4))', 1),
+            ('3 - 4 * 5 == 3 * 1 + 4 * 5;', '((3 - (4 * 5)) == ((3 * 1) + (4 * 5)))', 1),
+            ('3 > 5 == verdadero;', '((3 > 5) == verdadero)', 1),
+            ('3 < 5 == falso;', '((3 < 5) == falso)', 1),
+        ]
+        for source, expected_result, expected_statement_count in test_sources:
+            lexer = Lexer(source)
+            parser = Parser(lexer)
+            program = parser.parse_program()
+            self._test_program_statements(parser, program, expected_statement_count)
+            self.assertEqual(str(program), expected_result)
 
     def _test_program_statements(
         self,

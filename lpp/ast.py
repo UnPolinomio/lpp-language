@@ -98,7 +98,7 @@ class Prefix(Expression):
         self.right = right
 
     def __str__(self) -> str:
-        return f'{self.operator}{str(self.right)}'
+        return f'({self.operator}{str(self.right)})'
 
 class Infix(Expression):
     def __init__(
