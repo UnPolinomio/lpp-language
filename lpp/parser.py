@@ -18,7 +18,9 @@ from lpp.ast import (
     Integer,
     Prefix,
     Infix,
-    Boolean
+    Boolean,
+    If,
+    Block,
 )
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
@@ -183,6 +185,37 @@ class Parser:
             left=left,
             right=self._parse_expression(precedence)
         )
+
+    def _parse_if(self) -> Optional[If]:
+        if_token = self._current_token
+        if not self._expected_token(TokenType.LPAREN):
+            return None
+
+        self._advance_token()
+    
+        if_condition = self._parse_expression(Precedence.LOWEST)
+
+        if not self._expected_token(TokenType.RPAREN):
+            return None
+
+        if not self._expected_token(TokenType.LBRACE):
+            return None
+
+        if_consequence = self._parse_block()
+
+        if_alternative = None
+        if self._peek_token.token_type == TokenType.ELSE:
+            self._advance_token()
+            if not self._expected_token(TokenType.LBRACE):
+                return None
+            if_alternative = self._parse_block()
+
+        return If(
+            token=if_token,
+            condition=if_condition,
+            consequence=if_consequence,
+            alternative=if_alternative,
+        )
     
     def _current_precedence(self) -> Precedence:
         try:
@@ -220,6 +253,8 @@ class Parser:
             TokenType.FALSE: self._parse_boolean,
             TokenType.TRUE: self._parse_boolean,
             TokenType.LPAREN: self._parse_grouped_expression,
+
+            TokenType.IF: self._parse_if,
         }
 
     def _parse_expression(self, precedence: Precedence) -> Optional[Expression]:
@@ -268,3 +303,24 @@ class Parser:
             return None
 
         return expression
+
+    def _parse_block(self) -> Block:
+        token = self._current_token
+        statements = []
+
+        self._advance_token()
+
+        while (
+            not self._current_token.token_type == TokenType.RBRACE \
+            and not self._peek_token.token_type == TokenType.EOF
+        ):
+            statement = self._parse_statement()
+            if statement:
+                statements.append(statement)
+            
+            self._advance_token()
+
+        return Block(
+            token=token,
+            statements=statements,
+        )

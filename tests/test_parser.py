@@ -12,6 +12,8 @@ from lpp.ast import (
     Prefix,
     Infix,
     Boolean,
+    If,
+    Block,
 )
 
 from typing import Any, cast, Type
@@ -116,7 +118,6 @@ class ParserTest(TestCase):
 
         assert expression_statement.expression is not None
         self._test_literal_expression(expression_statement.expression, 5)
-
 
     def test_prefix_expression(self) -> None:
         source = '!5; -15; !verdadero; !falso'
@@ -235,6 +236,85 @@ class ParserTest(TestCase):
             program = parser.parse_program()
             self._test_program_statements(parser, program, expected_statement_count)
             self.assertEqual(str(program), expected_result)
+
+    def test_if_expression(self) -> None:
+        source = 'si (x < y) { z }'
+        lexer = Lexer(source)
+        parser = Parser(lexer)
+        program = parser.parse_program()
+
+        self._test_program_statements(parser, program)
+
+        if_expression = cast(
+            If,
+            cast(
+                ExpressionStatement,
+                program.statements[0]
+            ).expression
+        )
+        self.assertIsInstance(if_expression, If)
+
+        # Test condition
+        assert if_expression.condition is not None
+        self._test_infix_expression(if_expression.condition, 'x', '<', 'y')
+
+        # Test consequence
+        assert if_expression.consequence is not None
+        self.assertIsInstance(if_expression.consequence, Block)
+        self.assertEqual(len(if_expression.consequence.statements), 1)
+
+        consequence_statement = cast(
+            ExpressionStatement,
+            if_expression.consequence.statements[0]
+        )
+        assert consequence_statement.expression is not None
+        self._test_indentifier(consequence_statement.expression, 'z')
+
+        # Test alternative
+        self.assertIsNone(if_expression.alternative)
+
+    def test_if_else_expression(self) -> None:
+        source = 'si (x != y) { x } si_no { y }'
+        lexer = Lexer(source)
+        parser = Parser(lexer)
+        program = parser.parse_program()
+
+        if_expression = cast(
+            If,
+            cast(
+                ExpressionStatement,
+                program.statements[0]
+            ).expression
+        )
+        self.assertIsInstance(if_expression, If)
+
+        # Test condition
+        assert if_expression.condition is not None
+        self._test_infix_expression(if_expression.condition, 'x', '!=', 'y')
+
+        # Test consequence
+        assert if_expression.consequence is not None
+        self.assertIsInstance(if_expression.consequence, Block)
+        self.assertEqual(len(if_expression.consequence.statements), 1)
+
+        consequence_statement = cast(
+            ExpressionStatement,
+            if_expression.consequence.statements[0]
+        )
+        assert consequence_statement.expression is not None
+        self._test_indentifier(consequence_statement.expression, 'x')
+
+        # Test alternative
+        assert if_expression.alternative is not None
+        self.assertIsInstance(if_expression.alternative, Block)
+        self.assertEqual(len(if_expression.alternative.statements), 1)
+
+        alternative_statement = cast(
+            ExpressionStatement,
+            if_expression.alternative.statements[0]
+        )
+        assert alternative_statement.expression is not None
+        self._test_indentifier(alternative_statement.expression, 'y')
 
     def _test_program_statements(
         self,
