@@ -21,6 +21,7 @@ from lpp.ast import (
     Boolean,
     If,
     Block,
+    Function,
 )
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
@@ -216,6 +217,26 @@ class Parser:
             consequence=if_consequence,
             alternative=if_alternative,
         )
+
+    def _parse_function(self) -> Optional[Function]:
+        function_token = self._current_token
+
+        if not self._expected_token(TokenType.LPAREN):
+            return None
+        self._advance_token()
+
+        function_params = self._parse_function_parameters()
+
+        if not self._expected_token(TokenType.LBRACE):
+            return None
+
+        function_body = self._parse_block()
+
+        return Function(
+            token=function_token,
+            parameters=function_params,
+            body=function_body,
+        )
     
     def _current_precedence(self) -> Precedence:
         try:
@@ -255,6 +276,7 @@ class Parser:
             TokenType.LPAREN: self._parse_grouped_expression,
 
             TokenType.IF: self._parse_if,
+            TokenType.FUNCTION: self._parse_function,
         }
 
     def _parse_expression(self, precedence: Precedence) -> Optional[Expression]:
@@ -324,3 +346,25 @@ class Parser:
             token=token,
             statements=statements,
         )
+
+    def _parse_function_parameters(self) -> list[Identifier]:
+        parameters: list[Identifier] = []
+
+        if self._current_token.token_type == TokenType.RPAREN:
+            return parameters
+
+        while True:
+            identifier = Identifier(
+                token=self._current_token,
+                value=self._current_token.literal
+            )
+            parameters.append(identifier)
+            if self._peek_token.token_type != TokenType.COMMA:
+                break
+            self._advance_token()
+            self._advance_token()
+
+        if not self._expected_token(TokenType.RPAREN):
+            return []
+
+        return parameters
