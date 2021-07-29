@@ -168,3 +168,18 @@ class Function(Expression):
         params = ',  '.join([str(p) for p in self.parameters])
         return f'{self.token_literal()}({params}) {str(self.body)}'
 
+
+class Call(Expression):
+    def __init__(
+        self,
+        token: Token,
+        function: Expression,
+        arguments: list[Expression]
+    ) -> None:
+        super().__init__(token)
+        self.function = function
+        self.arguments = arguments
+
+    def __str__(self) -> str:
+        args = ', '.join([str(a) for a in self.arguments])
+        return f'{str(self.function)}({args})'

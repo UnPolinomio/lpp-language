@@ -15,6 +15,7 @@ from lpp.ast import (
     If,
     Block,
     Function,
+    Call,
 )
 
 from typing import Any, cast, Type
@@ -230,6 +231,20 @@ class ParserTest(TestCase):
             ('(5 + 5) * 2;', '((5 + 5) * 2)', 1),
             ('2 / (5 + 5)', '(2 / (5 + 5))', 1),
             ('-(5 + 5)', '(-(5 + 5))', 1),
+
+            # Using function calls
+            ('a + suma(b * c) + d;', '((a + suma((b * c))) + d)', 1),
+            (
+                'suma(a, b, 1, 2 * 3, 4 + 5, suma(6, 7 * 8));',
+                'suma(a, b, 1, (2 * 3), (4 + 5), suma(6, (7 * 8)))',
+                1
+            ),
+            (
+                'suma(a + b + c * d / f + g);',
+                'suma((((a + b) + ((c * d) / f)) + g))',
+                1
+            ),
+            ('abs(-5);', 'abs((-5))', 1),
         ]
         for source, expected_result, expected_statement_count in test_sources:
             lexer = Lexer(source)
@@ -393,6 +408,41 @@ class ParserTest(TestCase):
                 function_literal.parameters
             ):
                 self._test_literal_expression(actual_param, expected_param)
+
+    def test_call_expression(self) -> None:
+        source = 'suma(1, 2 * 3, 4 + 5)'
+        lexer = Lexer(source)
+        parser = Parser(lexer)
+        program = parser.parse_program()
+        self._test_program_statements(parser, program)
+        call_expression = cast(
+            Call,
+            cast(
+                ExpressionStatement,
+                program.statements[0]
+            ).expression
+        )
+        self.assertIsInstance(call_expression, Call)
+
+        self._test_indentifier(call_expression.function, 'suma')
+
+        self.assertEqual(len(call_expression.arguments), 3)
+
+        assert call_expression.arguments is not None
+        self.assertEqual(len(call_expression.arguments), 3)
+        self._test_literal_expression(call_expression.arguments[0], 1)
+        self._test_infix_expression(
+            call_expression.arguments[1],
+            2,
+            '*',
+            3,
+        )
+        self._test_infix_expression(
+            call_expression.arguments[2],
+            4,
+            '+',
+            5,
+        )
 
     def _test_program_statements(
         self,

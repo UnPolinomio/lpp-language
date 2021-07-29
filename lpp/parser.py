@@ -22,6 +22,7 @@ from lpp.ast import (
     If,
     Block,
     Function,
+    Call,
 )
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
@@ -48,6 +49,8 @@ PRECEDENCES: dict[TokenType, Precedence] = {
 
     TokenType.MULTIPLICATION: Precedence.PRODUCT,
     TokenType.DIVISION: Precedence.PRODUCT,
+
+    TokenType.LPAREN: Precedence.CALL,
 }
 
 PrefixParseFn = Callable[[], Optional[Expression]]
@@ -263,6 +266,8 @@ class Parser:
 
             TokenType.MULTIPLICATION: self._parse_infix_expression,
             TokenType.DIVISION: self._parse_infix_expression,
+
+            TokenType.LPAREN: self._parse_call,
         }
 
     def _register_prefix_fns(self) -> PrefixParseFns:
@@ -368,3 +373,35 @@ class Parser:
             return []
 
         return parameters
+
+    def _parse_call(self, function: Expression) -> Call:
+        call_token = self._current_token
+        arguments = self._parse_call_arguments()
+        return Call(
+            token=call_token,
+            function=function,
+            arguments=arguments
+        )
+
+    def _parse_call_arguments(self) -> list[Expression]:
+        arguments: list[Expression] = []
+
+        if self._peek_token.token_type == TokenType.RPAREN:
+            self._advance_token()
+            return arguments
+
+        self._advance_token()
+
+        while True:
+            if expression := self._parse_expression(Precedence.LOWEST):
+                arguments.append(expression)
+            
+            if self._peek_token.token_type != TokenType.COMMA:
+                break
+            self._advance_token()
+            self._advance_token()
+
+        if not self._expected_token(TokenType.RPAREN):
+            return []
+
+        return arguments
