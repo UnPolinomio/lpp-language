@@ -18,6 +18,7 @@ from lpp.ast import (
     Integer,
     Prefix,
     Infix,
+    Boolean
 )
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
@@ -216,6 +217,8 @@ class Parser:
             TokenType.INT: self._parse_integer,
             TokenType.MINUS: self._parse_prefix_expression,
             TokenType.NEGATION: self._parse_prefix_expression,
+            TokenType.FALSE: self._parse_boolean,
+            TokenType.TRUE: self._parse_boolean,
         }
 
     def _parse_expression(self, precedence: Precedence) -> Optional[Expression]:
@@ -249,4 +252,10 @@ class Parser:
         return Identifier(
             token=self._current_token,
             value=self._current_token.literal
+        )
+
+    def _parse_boolean(self) -> Boolean:
+        return Boolean(
+            token=self._current_token,
+            value=self._current_token.token_type == TokenType.TRUE
         )

@@ -11,6 +11,7 @@ from lpp.ast import (
     Integer,
     Prefix,
     Infix,
+    Boolean,
 )
 
 from typing import Any, cast, Type
@@ -180,6 +181,28 @@ class ParserTest(TestCase):
                 expected_right,
             )
 
+    def test_boolean_expression(self) -> None:
+        source = 'verdadero; falso;'
+        lexer = Lexer(source)
+        parser = Parser(lexer)
+        program = parser.parse_program()
+
+        self._test_program_statements(parser, program, 2)
+
+        expected_values = [True, False]
+        for statemet, expected_value in zip(
+            program.statements,
+            expected_values
+        ):
+            statemet = cast(ExpressionStatement, statemet)
+
+            assert statemet.expression is not None
+            self._test_literal_expression(
+                statemet.expression,
+                expected_value,
+            )
+        
+
     def _test_program_statements(
         self,
         parser: Parser,
@@ -205,6 +228,8 @@ class ParserTest(TestCase):
             self._test_indentifier(expression, expected_value)
         elif value_type == int:
             self._test_integer(expression, expected_value)
+        elif value_type == bool:
+            self._test_boolean(expression, expected_value)
         else:
             self.fail(f'Unhandled type of expression. Got={value_type}')
 
@@ -235,3 +260,9 @@ class ParserTest(TestCase):
 
         assert infix.right is not None
         self._test_literal_expression(infix.right, expected_right)
+
+    def _test_boolean(self, expression: Expression, expected_value: bool) -> None:
+        self.assertIsInstance(expression, Boolean)
+        boolean = cast(Boolean, expression)
+        self.assertEqual(boolean.value, expected_value)
+        self.assertEqual(boolean.token.literal, 'verdadero' if expected_value else 'falso')
