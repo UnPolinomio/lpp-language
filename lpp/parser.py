@@ -175,8 +175,8 @@ class Parser:
 
     def _parse_infix_expression(self, left: Expression) -> Infix:
         token = self._current_token
-        self._advance_token()
         precedence = self._current_precedence()
+        self._advance_token()
         return Infix(
             token=token,
             operator=token.literal,
