@@ -208,6 +208,7 @@ class ParserTest(TestCase):
         
     def test_operator_precedence(self) -> None:
         test_sources: list[tuple[str, str, int]] = [
+            # Normal order
             ('-a * b;', '((-a) * b)', 1),
             ('!-a;', '(!(-a))', 1),
             ('a + b / c;', '(a + (b / c))', 1),
@@ -221,6 +222,12 @@ class ParserTest(TestCase):
             ('3 - 4 * 5 == 3 * 1 + 4 * 5;', '((3 - (4 * 5)) == ((3 * 1) + (4 * 5)))', 1),
             ('3 > 5 == verdadero;', '((3 > 5) == verdadero)', 1),
             ('3 < 5 == falso;', '((3 < 5) == falso)', 1),
+
+            # Using parenthesis
+            ('1 + (2 + 3);', '(1 + (2 + 3))', 1),
+            ('(5 + 5) * 2;', '((5 + 5) * 2)', 1),
+            ('2 / (5 + 5)', '(2 / (5 + 5))', 1),
+            ('-(5 + 5)', '(-(5 + 5))', 1),
         ]
         for source, expected_result, expected_statement_count in test_sources:
             lexer = Lexer(source)
