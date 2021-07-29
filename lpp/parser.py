@@ -123,16 +123,17 @@ class Parser:
 
         if not self._expected_token(TokenType.ASSIGN):
             return None
+        self._advance_token()
 
-        # TODO: Parse expression
-        let_value = None
-        while self._current_token.token_type != TokenType.SEMICOLON:
+        let_value = self._parse_expression(Precedence.LOWEST)
+
+        if self._peek_token.token_type == TokenType.SEMICOLON:
             self._advance_token()
 
         return LetStatement(
             token=let_token,
             name=let_name,
-            value=let_value
+            value=let_value,
         )
 
     def _parse_return_statement(self) -> Optional[ReturnStatement]:
@@ -140,11 +141,14 @@ class Parser:
 
         self._advance_token()
 
-        # TODO: Parse expression
-        while self._current_token.token_type != TokenType.SEMICOLON:
+        return_value = self._parse_expression(Precedence.LOWEST)
+        if self._peek_token.token_type == TokenType.SEMICOLON:
             self._advance_token()
 
-        return ReturnStatement(token=return_token)
+        return ReturnStatement(
+            token=return_token,
+            return_value=return_value,
+        )
 
     def _parse_expression_statement(self) -> Optional[ExpressionStatement]:
         expression_token = self._current_token
