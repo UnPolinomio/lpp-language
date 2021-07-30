@@ -8,6 +8,7 @@ from lpp.object import (
     Object,
     Boolean,
     Null,
+    ObjectType
 )
 
 TRUE = Boolean(True)
@@ -46,6 +47,16 @@ def evaluate(node: ast.ASTNode) -> Optional[Object]:
         assert right is not None
         return _evaluate_prefix_expression(node.operator, right)
 
+    if node_type == ast.Infix:
+        node = cast(ast.Infix, node)
+        assert node.left is not None
+        assert node.right is not None
+        left = evaluate(node.left)
+        right = evaluate(node.right)
+        assert left is not None
+        assert right is not None
+        return _evaluate_infix_expression(node.operator, left, right)
+
     return None
 
 def _evaluate_statements(statemets: list[ast.Statement]) -> Optional[Object]:
@@ -80,3 +91,39 @@ def _evaluate_minus_operator_expression(right: Object) -> Object:
         return NULL
     right = cast(Integer, right)
     return Integer(-right.value)
+
+def _evaluate_infix_expression(operator: str, left: Object, right: Object) -> Object:
+    left_type = left.type()
+    right_type = right.type()
+    if left_type == ObjectType.INTEGER and right_type == ObjectType.INTEGER:
+        return _evaluate_integer_infix_expression(operator, left, right)
+    if operator == '==':
+        return _to_boolean_object(left is right)
+    if operator == '!=':
+        return _to_boolean_object(left is not right)
+    return NULL
+
+
+def _evaluate_integer_infix_expression(operator: str, left: Object, right: Object) -> Object:
+    left_value = cast(Integer, left).value
+    right_value = cast(Integer, right).value
+
+    if operator == '+':
+        return Integer(left_value + right_value)
+    if operator == '-':
+        return Integer(left_value - right_value)
+    if operator == '*':
+        return Integer(left_value * right_value)
+    if operator == '/':
+        return Integer(left_value // right_value)
+
+    if operator == '<':
+        return _to_boolean_object(left_value < right_value)
+    if operator == '>':
+        return _to_boolean_object(left_value > right_value)
+    if operator == '==':
+        return _to_boolean_object(left_value == right_value)
+    if operator == '!=':
+        return _to_boolean_object(left_value != right_value)
+
+    return NULL    

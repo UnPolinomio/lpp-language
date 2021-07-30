@@ -17,6 +17,15 @@ class EvaluatorTest(TestCase):
             ('10', 10),
             ('-5', -5),
             ('-10', -10),
+            ('5 + 5', 10),
+            ('5 - 10', -5),
+            ('2 * 2 * 2 * 2', 16),
+            ('2 * 5 - 3', 7), 
+            ('50 / 2', 25),
+            ('2 * (5 - 3)', 4),
+            ('(2 + 7) / 3', 3),
+            (' 50 / 2 * 2 + 10', 60),
+            ('5 / 2', 2),
         ]
 
         for source, expected in tests:
@@ -27,6 +36,18 @@ class EvaluatorTest(TestCase):
         tests: list[tuple[str, bool]] = [
             ('verdadero', True),
             ('falso', False),
+            ('1 < 2', True),
+            ('1 > 2', False),
+            ('1 == 2', False),
+            ('1 == 1', True),
+            ('1 != 2', True),
+            ('1 != 1', False),
+            ('verdadero == verdadero', True),
+            ('falso == falso', True),
+            ('verdadero != verdadero', False),
+            ('falso != falso', False),
+            ('(1 < 2) == verdadero', True),
+            ('(1 < 2) == falso', False),
         ]
         for source, expected in tests:
             evaluated = self._evaluate_tests(source)
