@@ -5,6 +5,7 @@ from lpp.token import (
     Token,
     TokenType,
 )
+from lpp.evaluator import evaluate
 
 EOF_TOKEN = Token(TokenType.EOF, '')
 
@@ -23,4 +24,6 @@ def start_repl() -> None:
             _print_parse_errors(parser.errors)
             continue
 
-        print(program)
+        evaluated = evaluate(program)
+        if evaluated is not None:
+            print(evaluated.inspect())
