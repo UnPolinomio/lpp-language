@@ -25,6 +25,19 @@ class Object(ABC):
     def inspect(self) -> str:
         pass
 
+class Enviroment(dict):
+    def __init__(self):
+        self._store = dict()
+
+    def __getitem__(self, key):
+        return self._store[key]
+    
+    def __setitem__(self, key, value):
+        self._store[key] = value
+
+    def __delitem__(self, key):
+        del self._store[key]
+
 class Integer(Object):
     def __init__(self, value: int):
         self.value = value
