@@ -57,6 +57,14 @@ def evaluate(node: ast.ASTNode) -> Optional[Object]:
         assert right is not None
         return _evaluate_infix_expression(node.operator, left, right)
 
+    if node_type == ast.Block:
+        node = cast(ast.Block, node)
+        return _evaluate_statements(node.statements)
+
+    if node_type == ast.If:
+        node = cast(ast.If, node)
+        return _evaluate_if_expression(node)
+
     return None
 
 def _evaluate_statements(statemets: list[ast.Statement]) -> Optional[Object]:
@@ -103,7 +111,6 @@ def _evaluate_infix_expression(operator: str, left: Object, right: Object) -> Ob
         return _to_boolean_object(left is not right)
     return NULL
 
-
 def _evaluate_integer_infix_expression(operator: str, left: Object, right: Object) -> Object:
     left_value = cast(Integer, left).value
     right_value = cast(Integer, right).value
@@ -127,3 +134,24 @@ def _evaluate_integer_infix_expression(operator: str, left: Object, right: Objec
         return _to_boolean_object(left_value != right_value)
 
     return NULL    
+
+def _evaluate_if_expression(if_node: ast.If) -> Optional[Object]:
+    assert if_node.condition is not None
+    condition = evaluate(if_node.condition)
+    assert condition is not None
+    if _is_truthy(condition):
+        assert if_node.consequence is not None
+        return evaluate(if_node.consequence)
+    elif if_node.alternative is not None:
+        return evaluate(if_node.alternative)
+
+    return NULL
+
+def _is_truthy(obj: Object) -> bool:
+    if obj is NULL:
+        return False
+    if obj is TRUE:
+        return True
+    if obj is FALSE:
+        return False
+    return True
