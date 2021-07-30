@@ -10,6 +10,7 @@ from lpp.object import (
     Object,
     Integer,
     Boolean,
+    Return,
 )
 from lpp.evaluator import (
     NULL,
@@ -89,6 +90,26 @@ class EvaluatorTest(TestCase):
                 self._test_integer_object(evaluated, expected)
             else:
                 self._test_null_object(evaluated)
+
+    def test_result_evaluation(self) -> None:
+        test: list[tuple[str, int]] = [
+            ('regresa 10;', 10),
+            ('regresa 10; 9;', 10),
+            ('regresa 2 * 5; 9', 10),
+            ('9; regresa 3 * 6; 9;', 18),
+            ('''
+                si (10 > 1) {
+                    si (20 > 10) {
+                        regresa 1;
+                    }
+                    regresa 0;
+                }
+            '''
+            , 1),
+        ]
+        for source, expected in test:
+            evaluated = self._evaluate_tests(source)
+            self._test_integer_object(evaluated, expected)
 
     def _evaluate_tests(self, source: str) -> Object:
         lexer = Lexer(source)
