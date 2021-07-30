@@ -15,6 +15,8 @@ class EvaluatorTest(TestCase):
         tests: list[tuple[str, int]] = [
             ('5', 5),
             ('10', 10),
+            ('-5', -5),
+            ('-10', -10),
         ]
 
         for source, expected in tests:
@@ -26,6 +28,20 @@ class EvaluatorTest(TestCase):
             ('verdadero', True),
             ('falso', False),
         ]
+        for source, expected in tests:
+            evaluated = self._evaluate_tests(source)
+            self._test_boolean_object(evaluated, expected)
+
+    def test_bang_operator(self) -> None:
+        tests: list[tuple[str, bool]] = [
+            ('!verdadero', False),
+            ('!falso', True),
+            ('!!verdadero', True),
+            ('!!falso', False),
+            ('!5', False),
+            ('!!5', True),
+        ]
+
         for source, expected in tests:
             evaluated = self._evaluate_tests(source)
             self._test_boolean_object(evaluated, expected)
