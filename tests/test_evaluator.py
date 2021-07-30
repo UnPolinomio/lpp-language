@@ -10,7 +10,7 @@ from lpp.object import (
     Object,
     Integer,
     Boolean,
-    Return,
+    Error,
 )
 from lpp.evaluator import (
     NULL,
@@ -110,6 +110,53 @@ class EvaluatorTest(TestCase):
         for source, expected in test:
             evaluated = self._evaluate_tests(source)
             self._test_integer_object(evaluated, expected)
+
+    def test_error_handling(self) -> None:
+        tests: list[tuple[str, str]] = [
+            (
+                '5 + verdadero',
+                'Discrepancia de tipos: INTEGER + BOOLEAN',
+            ),
+            (
+                '5 + verdadero; 9;',
+                'Discrepancia de tipos: INTEGER + BOOLEAN',
+            ),
+            (
+                '-verdadero',
+                'Operador desconocido: -BOOLEAN',
+            ),
+            (
+                'verdadero + falso',
+                'Operador desconocido: BOOLEAN + BOOLEAN',
+            ),
+            (
+                '5; verdadero - falso; 10;',
+                'Operador desconocido: BOOLEAN - BOOLEAN',
+            ),
+            (
+                '''
+                    si (10 > 7) {
+                        regresa verdadero + falso;
+                    }
+                ''',
+                'Operador desconocido: BOOLEAN + BOOLEAN',
+            ),
+            (
+                '''
+                    si (5 < 2) {
+                        regresa 1;
+                    } si_no {
+                        regresa verdadero / falso;
+                    }
+                ''',
+                'Operador desconocido: BOOLEAN / BOOLEAN',
+            ),
+        ]
+        for source, expected in tests:
+            evaluated = self._evaluate_tests(source)
+            self.assertIsInstance(evaluated, Error)
+            evaluated = cast(Error, evaluated)
+            self.assertEqual(evaluated.message, expected)
 
     def _evaluate_tests(self, source: str) -> Object:
         lexer = Lexer(source)
