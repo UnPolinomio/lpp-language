@@ -12,7 +12,8 @@ from lpp.object import (
     Null,
     Return,
     ObjectType,
-    Error
+    Error,
+    Function,
 )
 
 TRUE = Boolean(True)
@@ -92,6 +93,16 @@ def evaluate(node: ast.ASTNode, env: Enviroment) -> Optional[Object]:
     if node_type == ast.Identifier:
         node = cast(ast.Identifier, node)
         return _evaluate_identifier(node, env)
+
+    if node_type == ast.Function:
+        node = cast(ast.Function, node)
+        assert node.body is not None
+
+        return Function(
+            parameters=node.parameters,
+            body=node.body,
+            env=env,
+        )
 
     return None
 

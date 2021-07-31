@@ -7,11 +7,16 @@ from enum import (
     auto,
     unique
 )
+from lpp.ast import (
+    Block,
+    Identifier,
+)
 
 @unique
 class ObjectType(Enum):
     BOOLEAN = auto()
     INTEGER = auto()
+    FUNCTION = auto()
     NULL = auto()
     RETURN = auto()
     ERROR = auto()
@@ -84,3 +89,21 @@ class Error(Object):
 
     def inspect(self) -> str:
         return f'Error: {self.message}'
+
+class Function(Object):
+    def __init__(
+        self,
+        parameters: list[Identifier],
+        body: Block,
+        env: Enviroment
+    ):
+        self.parameters = parameters
+        self.body = body
+        self.env = env
+    
+    def type(self) -> ObjectType:
+        return ObjectType.FUNCTION
+
+    def inspect(self) -> str:
+        params = ', '.join([str(p) for p in self.parameters])
+        return f'procedimiento({params}) {{\n{str(self.body)}\n}}'
