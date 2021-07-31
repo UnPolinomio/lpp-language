@@ -16,18 +16,21 @@ def _print_parse_errors(errors: list[str]) -> None:
         print(error)
 
 def start_repl() -> None:
-    scanned: list[str] = []
-    while (source := input('>> ')) != 'salir()':
-        scanned.append(source)
-        lexer = Lexer(' '.join(scanned))
-        parser = Parser(lexer)
-        program = parser.parse_program()
-        env = Enviroment()
+    env = Enviroment()
 
-        if len(parser.errors) > 0:
-            _print_parse_errors(parser.errors)
-            continue
+    try:
+        while True:
+            source = input('>> ')
+            lexer = Lexer(source)
+            parser = Parser(lexer)
+            program = parser.parse_program()
+            
+            if len(parser.errors) > 0:
+                _print_parse_errors(parser.errors)
+                continue
 
-        evaluated = evaluate(program, env)
-        if evaluated is not None:
-            print(evaluated.inspect())
+            evaluated = evaluate(program, env)
+            if evaluated is not None:
+                print(evaluated.inspect())    
+    except KeyboardInterrupt:
+        print('\nSaliendo...')
