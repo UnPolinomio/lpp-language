@@ -2,6 +2,7 @@ from unittest import TestCase
 from typing import (
     cast,
     Any,
+    Union,
 )
 
 from lpp.lexer import Lexer
@@ -276,6 +277,27 @@ class EvaluatorTest(TestCase):
             evaluated = self._evaluate_tests(source)
             self._test_boolean_object(evaluated, expected)
 
+    def test_builtin_functions(self) -> None:
+        test: list[tuple[str, Union[int, str]]] = [
+            ('longitud("");', 0),
+            ('longitud("cuatro");', 6),
+            ('longitud("Hola mundo");', 10),
+            ('longitud(1);', 'argumento para longitud sin soporte, se recibió INTEGER'),
+            (
+                'longitud("uno", "dos")',
+                'número incorrecto de argumentos para longitud, se recibieron 2, se requieren 1',
+            ),
+        ]
+        for source, expected in test:
+            evaluated = self._evaluate_tests(source)
+
+            if type(expected) == int:
+                expected = cast(int, expected)
+                self._test_integer_object(evaluated, expected)
+            else:
+                expected = cast(str, expected)
+                self._test_error_object(evaluated, expected)
+
     def _evaluate_tests(self, source: str) -> Object:
         lexer = Lexer(source)
         parser = Parser(lexer)
@@ -307,3 +329,9 @@ class EvaluatorTest(TestCase):
         evaluated = cast(String, evaluated)
 
         self.assertEqual(evaluated.value, expected)
+
+    def _test_error_object(self, evaluated: Object, expected: str) -> None:
+        self.assertIsInstance(evaluated, Error)
+        evaluated = cast(Error, evaluated)
+
+        self.assertEqual(evaluated.message, expected)

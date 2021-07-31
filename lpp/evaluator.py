@@ -15,7 +15,9 @@ from lpp.object import (
     ObjectType,
     Error,
     Function,
+    Builtin,
 )
+from lpp.builtins import BUILTINS
 
 TRUE = Boolean(True)
 FALSE = Boolean(False)
@@ -263,7 +265,10 @@ def _evaluate_identifier(node: ast.Identifier, env: Enviroment) -> Object:
     try:
         return env[node.value]
     except KeyError:
-        return _new_error(_UNKNOW_IDENTIFIER, [node.value])
+        return BUILTINS.get(
+            node.value,
+            _new_error(_UNKNOW_IDENTIFIER, [node.value])
+        )
 
 def _evaluate_expression(expressions: list[ast.Expression], env: Enviroment) -> list[Object]:
     result: list[Object] = []
@@ -275,14 +280,18 @@ def _evaluate_expression(expressions: list[ast.Expression], env: Enviroment) -> 
     return result
 
 def _apply_function(fn: Object, args: list[Object]) -> Object:
-    if type(fn) != Function:
-        return _new_error(_NOT_A_FUNCTION, [fn.type().name])
+    if type(fn) == Function:
+        fn = cast(Function, fn)
+        extended_environment = _extended_function_enviroment(fn, args)
+        evaluated = evaluate(fn.body, extended_environment)
+        assert evaluated is not None
+        return _unwrap_return_value(evaluated)
 
-    fn = cast(Function, fn)
-    extended_environment = _extended_function_enviroment(fn, args)
-    evaluated = evaluate(fn.body, extended_environment)
-    assert evaluated is not None
-    return _unwrap_return_value(evaluated)
+    if type(fn) == Builtin:
+        fn = cast(Builtin, fn)
+        return fn.fn(*args)
+
+    return _new_error(_NOT_A_FUNCTION, [fn.type().name])
 
 def _extended_function_enviroment(fn: Function, args: list[Object]) -> Enviroment:
     env = Enviroment(outer=fn.env)

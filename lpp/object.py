@@ -11,6 +11,7 @@ from lpp.ast import (
     Block,
     Identifier,
 )
+from typing import Protocol
 
 @unique
 class ObjectType(Enum):
@@ -20,6 +21,7 @@ class ObjectType(Enum):
     FUNCTION = auto()
     NULL = auto()
     RETURN = auto()
+    BUILTIN = auto()
     ERROR = auto()
 
 class Object(ABC):
@@ -124,3 +126,16 @@ class Function(Object):
     def inspect(self) -> str:
         params = ', '.join([str(p) for p in self.parameters])
         return f'procedimiento({params}) {{\n{str(self.body)}\n}}'
+
+class BuiltinFunction(Protocol):
+    def __call__(self, *args: Object) -> Object: ...
+
+class Builtin(Object):
+    def __init__(self, fn: BuiltinFunction):
+        self.fn = fn
+
+    def type(self) -> ObjectType:
+        return ObjectType.BUILTIN
+    
+    def inspect(self) -> str:
+        return 'builtin function'
