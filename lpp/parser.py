@@ -23,6 +23,7 @@ from lpp.ast import (
     Block,
     Function,
     Call,
+    StringLiteral,
 )
 from lpp.lexer import Lexer
 from lpp.token import Token, TokenType
@@ -286,6 +287,8 @@ class Parser:
 
             TokenType.IF: self._parse_if,
             TokenType.FUNCTION: self._parse_function,
+
+            TokenType.STRING: self._parse_string_literal,
         }
 
     def _parse_expression(self, precedence: Precedence) -> Optional[Expression]:
@@ -409,3 +412,9 @@ class Parser:
             return []
 
         return arguments
+
+    def _parse_string_literal(self) -> Expression:
+        return StringLiteral(
+            token=self._current_token,
+            value=self._current_token.literal
+        )

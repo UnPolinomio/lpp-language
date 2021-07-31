@@ -16,6 +16,7 @@ from lpp.ast import (
     Block,
     Function,
     Call,
+    StringLiteral,
 )
 
 from typing import Any, cast, Type
@@ -477,6 +478,20 @@ class ParserTest(TestCase):
             '+',
             5,
         )
+
+    def test_string_literal_expression(self) -> None:
+        source = '"Hola"'
+        lexer = Lexer(source)
+        parser = Parser(lexer)
+        program = parser.parse_program()
+
+        expression_statement = cast(
+            ExpressionStatement,
+            program.statements[0]
+        )
+        string_literal = cast(StringLiteral, expression_statement.expression)
+        self.assertIsInstance(string_literal, StringLiteral)
+        self.assertEqual(string_literal.value, 'Hola')
 
     def _test_program_statements(
         self,

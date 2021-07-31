@@ -89,6 +89,14 @@ class Integer(Expression):
 
     def __str__(self) -> str:
         return str(self.value)
+        
+class StringLiteral(Expression):
+    def __init__(self, token: Token, value: str) -> None:
+        super().__init__(token)
+        self.value = value
+
+    def __str__(self) -> str:
+        return self.value
 
 class Prefix(Expression):
     def __init__(

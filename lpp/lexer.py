@@ -32,6 +32,7 @@ TOKEN_REGEX.sort(key=lambda x: x.n_characters, reverse=True)
 LETTER_REGEX = compile(r'^[a-záéíóúA-ZÁÉÍÓÚñÑ_]$')
 NUMBER_REGEX = compile(r'^[0-9]$')
 WHITESPACE_REGEX = compile(r'^\s+$')
+QUOTATION_REGEX = compile(r'^"$')
 
 class Lexer:
     def __init__(self, source: str) -> None:
@@ -60,6 +61,10 @@ class Lexer:
         if self._is_number(self._character):
             literal = self._read_number()
             return Token(TokenType.INT, literal)
+
+        if QUOTATION_REGEX.match(self._character):
+            literal = self._read_string()
+            return Token(TokenType.STRING, literal)
 
         token =  Token(TokenType.ILLEGAL, self._character)
         self._read_character()
@@ -102,6 +107,16 @@ class Lexer:
             self._read_character()
 
         return self._source[initial_position:self._position]
+
+    def _read_string(self) -> str:
+        self._read_character()
+        initial_position = self._position
+        while not QUOTATION_REGEX.match(self._character) and self._read_position <= len(self._source):
+            self._read_character()
+        
+        string = self._source[initial_position:self._position]
+        self._read_character()
+        return string
 
     def _skip_whitespace(self) -> None:
         while WHITESPACE_REGEX.match(self._character):

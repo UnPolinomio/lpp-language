@@ -16,6 +16,7 @@ from lpp.ast import (
 class ObjectType(Enum):
     BOOLEAN = auto()
     INTEGER = auto()
+    STRING = auto()
     FUNCTION = auto()
     NULL = auto()
     RETURN = auto()
@@ -58,6 +59,16 @@ class Integer(Object):
 
     def inspect(self) -> str:
         return str(self.value)
+
+class String(Object):
+    def __init__(self, value: str):
+        self.value = value
+    
+    def type(self) -> ObjectType:
+        return ObjectType.STRING
+    
+    def inspect(self) -> str:
+        return f'"{self.value}"'
 
 class Boolean(Object):
     def __init__(self, value: bool):

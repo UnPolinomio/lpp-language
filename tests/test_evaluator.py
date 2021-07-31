@@ -13,6 +13,7 @@ from lpp.object import (
     Boolean,
     Error,
     Function,
+    String,
 )
 from lpp.evaluator import (
     NULL,
@@ -157,6 +158,7 @@ class EvaluatorTest(TestCase):
                 'foobar;',
                 'Identificador no encontrado: foobar',
             ),
+            ('"Foo" - "Bar";', 'Operador desconocido: STRING - STRING'),
         ]
         for source, expected in tests:
             evaluated = self._evaluate_tests(source)
@@ -234,6 +236,46 @@ class EvaluatorTest(TestCase):
             evaluated = self._evaluate_tests(source)
             self._test_integer_object(evaluated, expected)
 
+    def test_string_evaluation(self) -> None:
+        tests: list[tuple[str, str]] = [
+            ('"Hola";', 'Hola'),
+            ('procedimiento() { regresa "Hola"; }();', 'Hola'),
+        ]
+        for source, expected in tests:
+            evaluated = self._evaluate_tests(source)
+            self.assertIsInstance(evaluated, String)
+            evaluated = cast(String, evaluated)
+            self.assertEqual(evaluated.value, expected)
+
+    def test_string_concatenation(self) -> None:
+        tests: list[tuple[str, str]] = [
+            ('"Foo" + "bar";', "Foobar"),
+            ('"Foo" + " " + "bar";', "Foo bar"),
+            (
+                '''
+                    variable saludo = procedimiento(nombre) {
+                        regresa "Hola " + nombre + "!";
+                    };
+                    saludo("Pepito");
+                ''',
+                "Hola Pepito!",
+            ),
+        ]
+        for source, expected in tests:
+            evaluated = self._evaluate_tests(source)
+            self._test_string_object(evaluated, expected)
+
+    def test_string_comparison(self) -> None:
+        tests: list[tuple[str, bool]] = [
+            ('"a" == "a";', True),
+            ('"a" != "a";', False),
+            ('"a" == "b";', False),
+            ('"a" != "b";', True),
+        ]
+        for source, expected in tests:
+            evaluated = self._evaluate_tests(source)
+            self._test_boolean_object(evaluated, expected)
+
     def _evaluate_tests(self, source: str) -> Object:
         lexer = Lexer(source)
         parser = Parser(lexer)
@@ -259,3 +301,9 @@ class EvaluatorTest(TestCase):
 
     def _test_null_object(self, evaluated: Object) -> None:
         self.assertIs(evaluated, NULL)
+
+    def _test_string_object(self, evaluated: Object, expected: str) -> None:
+        self.assertIsInstance(evaluated, String)
+        evaluated = cast(String, evaluated)
+
+        self.assertEqual(evaluated.value, expected)

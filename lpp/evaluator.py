@@ -9,6 +9,7 @@ from lpp.object import (
     Enviroment,
     Integer,
     Boolean,
+    String,
     Null,
     Return,
     ObjectType,
@@ -49,6 +50,10 @@ def evaluate(node: ast.ASTNode, env: Enviroment) -> Optional[Object]:
         assert node.value is not None
 
         return _to_boolean_object(node.value)
+
+    if node_type == ast.StringLiteral:
+        node = cast(ast.StringLiteral, node)
+        return String(node.value)
 
     if node_type == ast.Prefix:
         node = cast(ast.Prefix, node)
@@ -173,6 +178,8 @@ def _evaluate_infix_expression(operator: str, left: Object, right: Object) -> Ob
     right_type = right.type()
     if left_type == ObjectType.INTEGER and right_type == ObjectType.INTEGER:
         return _evaluate_integer_infix_expression(operator, left, right)
+    if left_type == ObjectType.STRING and right_type == ObjectType.STRING:
+        return _evaluate_string_infix_expression(operator, left, right)
     if operator == '==':
         return _to_boolean_object(left is right)
     if operator == '!=':
@@ -209,6 +216,20 @@ def _evaluate_integer_infix_expression(operator: str, left: Object, right: Objec
     if operator == '!=':
         return _to_boolean_object(left_value != right_value)
 
+    return _new_error(
+        _UNKNOW_INFIX_OPERATOR,
+        [left.type().name, operator, right.type().name]
+    )
+
+def _evaluate_string_infix_expression(operator: str, left: Object, right: Object) -> Object:
+    left_value = cast(String, left).value
+    right_value = cast(String, right).value
+    if operator == '+':
+        return String(left_value + right_value)
+    if operator == '==':
+        return _to_boolean_object(left_value == right_value)
+    if operator == '!=':
+        return _to_boolean_object(left_value != right_value)
     return _new_error(
         _UNKNOW_INFIX_OPERATOR,
         [left.type().name, operator, right.type().name]
