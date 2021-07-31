@@ -25,6 +25,7 @@ _TYPE_MISMATCH = 'Discrepancia de tipos: {} {} {}'
 _UNKNOW_PREFIX_OPERATOR = 'Operador desconocido: {}{}'
 _UNKNOW_INFIX_OPERATOR = 'Operador desconocido: {} {} {}'
 _UNKNOW_IDENTIFIER = 'Identificador no encontrado: {}'
+_NOT_A_FUNCTION = 'No es una funcion: {}'
 
 def evaluate(node: ast.ASTNode, env: Enviroment) -> Optional[Object]:
     node_type = type(node)
@@ -103,6 +104,13 @@ def evaluate(node: ast.ASTNode, env: Enviroment) -> Optional[Object]:
             body=node.body,
             env=env,
         )
+
+    if node_type == ast.Call:
+        node = cast(ast.Call, node)
+        function = evaluate(node.function, env)
+        assert function is not None
+        args = _evaluate_expression(node.arguments, env)
+        return _apply_function(function, args)
 
     return None
 
@@ -235,3 +243,35 @@ def _evaluate_identifier(node: ast.Identifier, env: Enviroment) -> Object:
         return env[node.value]
     except KeyError:
         return _new_error(_UNKNOW_IDENTIFIER, [node.value])
+
+def _evaluate_expression(expressions: list[ast.Expression], env: Enviroment) -> list[Object]:
+    result: list[Object] = []
+    for expression in expressions:
+        evaluated = evaluate(expression, env)
+        assert evaluated is not None
+        result.append(evaluated)
+        
+    return result
+
+def _apply_function(fn: Object, args: list[Object]) -> Object:
+    if type(fn) != Function:
+        return _new_error(_NOT_A_FUNCTION, [fn.type().name])
+
+    fn = cast(Function, fn)
+    extended_environment = _extended_function_enviroment(fn, args)
+    evaluated = evaluate(fn.body, extended_environment)
+    assert evaluated is not None
+    return _unwrap_return_value(evaluated)
+
+def _extended_function_enviroment(fn: Function, args: list[Object]) -> Enviroment:
+    env = Enviroment(outer=fn.env)
+    for arg, param in zip(args, fn.parameters):
+        env[param.value] = arg
+    
+    return env
+
+def _unwrap_return_value(obj: Object) -> Object:
+    if type(obj) == Return:
+        obj = cast(Return, obj)
+        return obj.value
+    return obj
