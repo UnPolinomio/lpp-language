@@ -3,5 +3,9 @@ variable es_mayor_de_edad = procedimiento (edad) {
 };
 
 variable mi_edad = 16;
+variable edad_de_mi_papá = 41;
 
-es_mayor_de_edad(mi_edad);
+imprime(es_mayor_de_edad(mi_edad));
+imprime(es_mayor_de_edad(edad_de_mi_papá));
+
+"Fin";
