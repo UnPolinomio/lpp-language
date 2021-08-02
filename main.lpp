@@ -1,0 +1,7 @@
+variable es_mayor_de_edad = procedimiento (edad) {
+    regresa edad > 17;
+};
+
+variable mi_edad = 16;
+
+es_mayor_de_edad(mi_edad);
