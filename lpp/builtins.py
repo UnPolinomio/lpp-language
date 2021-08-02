@@ -20,6 +20,13 @@ def longitud(*args: Object) -> Object:
     
     return Error(_UNSUPPORTED_ARGUMENT_TYPE.format(args[0].type().name))
 
+def imprime(*args: Object) -> Object:
+    value = ' '.join([arg.inspect() for arg in args])
+    print(value)
+
+    return String(value)
+
 BUILTINS: dict[str, Builtin] = {
     'longitud': Builtin(fn=longitud),
+    'imprime': Builtin(fn=imprime),
 }
